@@ -22,6 +22,7 @@ ENDPOINTS
 
 - http://localhost:8080/api/files/:id :
     > Send a `GET` request with file ID to get file data (filename and download link)
+    
     > Send a `DELETE` request with file ID to delete the file
 
 - http://localhost:8080/api/files/download/:id :
