@@ -44,7 +44,7 @@ ENDPOINTS
 
     > Send a `DELETE` request with Admin Token or Requested User Token to delete User
 
-- http://localhost:8080/api/users/adminfather : ** DO NOT USE IN PRODUCTION! **
+- http://localhost:8080/api/users/adminfather : **DO NOT USE IN PRODUCTION!**
     > Send a `POST` request to create Test Admin User  
 
     > Send a `GET` request to sign in Test Admin User
