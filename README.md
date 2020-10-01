@@ -28,3 +28,24 @@ ENDPOINTS
 - http://localhost:8080/api/files/download/:id :
     > Send a `GET` request with file ID to download the file
 
+- http://localhost:8080/api/users/signup :
+    > Send a `POST` request with JSON params "email" and "password" to create User
+
+- http://localhost:8080/api/users/signin :
+    > Send a `POST` request with JSON params "email" and "password" to sign in User
+
+- http://localhost:8080/api/users/all :
+    > Send a `GET` request with Admin Token in to `req.headers` to get Users list
+
+- http://localhost:8080/api/users/user/:id :
+    > Send a `GET` request to get User Data. Required Admin Token or Requested User Token 
+
+    > Send a `PUT` request with JSON params to update User Data. Required Admin Token to apdate User to Admin. Required Requested User Token to update other personal data
+
+    > Send a `DELETE` request with Admin Token or Requested User Token to delete User
+
+- http://localhost:8080/api/users/adminfather : ** DO NOT USE IN PRODUCTION! **
+    > Send a `POST` request to create Test Admin User  
+
+    > Send a `GET` request to sign in Test Admin User
+
