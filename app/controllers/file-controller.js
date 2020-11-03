@@ -1,125 +1,134 @@
 const Path = require(`path`);
 const File = require('../models').files;
-const fs = require('fs');
+const fs = require('fs').promises;
 
-exports.uploadFile = (req, res) => {
-    if (!req.file) {
-        res.status(400).send({
-            message: 'Request has no file!'
-        });
-        return;
+const upload = require('../helpers/uploud-helper').upload
+
+const {
+    errorMessage,
+    successMessage,
+    status
+} = require('../helpers/response-helper.js');
+
+
+exports.uploadFile = async (req, res) => {
+    try {
+        await upload(req, res);
+
+        if (!req.file) {
+            res.status(400).send({
+                message: 'Request has no file!'
+            });
+            return;
+        }
+
+        const file = {
+            originalname: req.file.originalname,
+            storage_id: req.file.filename
+        };
+
+        const data = await File.create(file);
+
+        successMessage.data = data;
+        return res.status(status.success).send(successMessage);
+
+    } catch (error) {
+        errorMessage.error = `Operation was not successful ${error}`;
+        return res.status(status.error).send(errorMessage);
     }
-
-    const file = {
-        originalname: req.file.originalname,
-        storage_id: req.file.filename
-    };
-
-    File.create(file)
-        .then(data => {
-            res.send(data);
-        })
-        .catch(err => {
-            res.status(500).send({
-                message: 'Some error occurred while uploading the File.'
-            });
-        });
 };
 
-exports.downloadFile = (req, res) => {
+exports.downloadFile = async (req, res) => {
     const storageId = Path.basename(req.params.id);
 
-    File.findOne({
+    try {
+        const data = await File.findOne({
             where: {
                 storage_id: storageId
             }
-        })
-        .then(data => {
-            const file = `app/storage/${data.storage_id}`;
-            const filename = data.originalname;
-
-            res.download(file, filename);
-        })
-        .catch(err => {
-            res.status(500).send({
-                message: `Error in downloading File with id=${storageId}`
-            });
         });
+
+        const file = `app/storage/${data.storage_id}`;
+        const filename = data.originalname;
+
+        return await res.download(file, filename);
+
+    } catch (error) {
+        errorMessage.error = `Operation was not successful ${error}`;
+        return res.status(status.error).send(errorMessage);
+    }
 };
 
-exports.findFile = (req, res) => {
+exports.findFile = async (req, res) => {
     const storageId = Path.basename(req.params.id);
 
-    File.findOne({
+    try {
+        const data = await File.findOne({
             where: {
                 storage_id: storageId
             }
-        })
-        .then(data => {
-            const filename = data.originalname;
-            const link = `http://localhost:8080/api/files/download/${data.storage_id}`;
-
-            res.send({
-                filename: filename,
-                link: link
-            });
-        })
-        .catch(err => {
-            res.status(500).send({
-                message: `File with id=${storageId} do not exists!`
-            });
         });
+
+        successMessage.data = {
+            filename: data.originalname,
+            download_link: `http://localhost:8080/api/files/download/${data.storage_id}`
+        };
+
+        return res.status(status.success).send(successMessage);
+
+    } catch (error) {
+        errorMessage.error = `File with id=${storageId} do not exists!`;
+        return res.status(status.notfound).send(errorMessage);
+    }
 };
 
-exports.allFiles = (req, res) => {
-    File.findAll()
-        .then(data => {
-            let filesList = [];
+exports.allFiles = async (req, res) => {
+    let filesList = [];
 
-            data.forEach(element => {
-                let filename = element.originalname;
-                let link = `http://localhost:8080/api/files/${element.storage_id}`;
+    try {
+        const data = await File.findAll();
 
-                filesList.push({
-                    filename: filename,
-                    link: link
-                });
-            });
-
-            res.send(filesList);
-        })
-        .catch(err => {
-            res.status(500).send({
-                message: err
+        data.forEach(element => {
+            filesList.push({
+                filename: element.originalname,
+                download_link: `http://localhost:8080/api/files/${element.storage_id}`
             });
         });
+
+        successMessage.data = filesList;
+        return res.status(status.success).send(successMessage);
+
+    } catch (error) {
+        errorMessage.error = `Operation was not successful ${error}`;
+        return res.status(status.error).send(errorMessage);
+    }
 };
 
-exports.deleteFile = (req, res) => {
+exports.deleteFile = async (req, res) => {
     const storageId = Path.basename(req.params.id);
 
-    File.destroy({
+    try {
+        const data = await File.destroy({
             where: {
                 storage_id: storageId
             }
-        })
-        .then(data => {
-            if (data == 1) {
-                const file = `app/storage/${storageId}`;
-                fs.unlink(file, () => {
-                    res.send({
-                        message: 'File was deleted successfully!'
-                    });
-                });
-            } else {
-                res.send({
-                    message: `File with id=${storageId} do not exists.`
-                });
-            }
-        })
-        .catch(err => {
-            res.status(500).send({
-                message: `Could not delete Tutorial with id=${storageId}\n${err}`
-            });
         });
+
+        if (data == 1) {
+            const file = `app/storage/${storageId}`;
+
+            await fs.unlink(file);
+
+            successMessage.data = 'File was deleted successfully!';
+            return res.status(status.success).send(successMessage);
+
+        } else {
+            errorMessage.error = `File with id=${storageId} do not exists.`;
+            return res.status(status.notfound).send(errorMessage);
+        }
+
+    } catch (error) {
+        errorMessage.error = `Operation was not successful ${error}`;
+        return res.status(status.error).send(errorMessage);
+    }
 };
